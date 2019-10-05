@@ -186,7 +186,7 @@ def test():
 	import glob
 	import matplotlib.pyplot as plt
 
-	lidar_path = os.path.join('crop/')
+	lidar_path = os.path.join('data/')
 	lidar_file = lidar_path + '000000.bin'
 	print("Processing: ", lidar_file)
 	lidar = np.fromfile(lidar_file, dtype=np.float32)
