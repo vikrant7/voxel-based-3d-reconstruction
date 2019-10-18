@@ -1,13 +1,13 @@
 import numpy as np
 
 def NFC3(x): #take neighborhood as input
-	pass
+	
 
 def NBC3(x):
-	pass
+	
 
 def NBC5(x):
-	pass
+	
 
 def Bresenham3D(start, end):
 	x1 = start[0]

@@ -60,8 +60,8 @@ def draw_lidar(lidar, is_grid=False, is_axis = True, is_top_region=True, fig=Non
 	if is_top_region:
 		x1 = cfg.xrange[0]
 		x2 = cfg.xrange[1]
-		y1 = cfg.yrange[0]
-		y2 = cfg.yrange[1]
+		y1 = cfg.xrange[0]
+		y2 = cfg.xrange[1]
 		mlab.plot3d([x1, x1], [y1, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=None, line_width=1, figure=fig)
 		mlab.plot3d([x2, x2], [y1, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=None, line_width=1, figure=fig)
 		mlab.plot3d([x1, x2], [y1, y1], [0,0], color=(0.5,0.5,0.5), tube_radius=None, line_width=1, figure=fig)
@@ -128,8 +128,8 @@ def draw_voxel(voxel_coords, lidar, is_grid=False, is_axis = True, is_top_region
 	if is_top_region:
 		x1 = cfg.xrange[0]
 		x2 = cfg.xrange[1]
-		y1 = cfg.yrange[0]
-		y2 = cfg.yrange[1]
+		y1 = cfg.xrange[0]
+		y2 = cfg.xrange[1]
 		mlab.plot3d([x1, x1], [y1, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=None, line_width=1, figure=fig)
 		mlab.plot3d([x2, x2], [y1, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=None, line_width=1, figure=fig)
 		mlab.plot3d([x1, x2], [y1, y1], [0,0], color=(0.5,0.5,0.5), tube_radius=None, line_width=1, figure=fig)
@@ -149,17 +149,17 @@ def preprocess(lidar):
 	vw = 0.2
 
 	# points cloud range
-	xrange = (0, 70.4)
-	yrange = (-40, 40)
-	zrange = (-3, 1)
-	W = math.ceil((xrange[1] - xrange[0]) / vw)
-	H = math.ceil((yrange[1] - yrange[0]) / vh)
-	D = math.ceil((zrange[1] - zrange[0]) / vd)
+	x_range = (0, 70.4)
+	y_range = (-40, 40)
+	z_range = (-3, 1)
+	W = math.ceil((x_range[1] - x_range[0]) / vw)
+	H = math.ceil((y_range[1] - y_range[0]) / vh)
+	D = math.ceil((z_range[1] - z_range[0]) / vd)
 	print(W, H, D)
 	# shuffling the points
 	#snp.random.shuffle(lidar)
 
-	voxel_coords = ((lidar[:, :3] - np.array([xrange[0], yrange[0], zrange[0]])) / (
+	voxel_coords = ((lidar[:, :3] - np.array([x_range[0], y_range[0], z_range[0]])) / (
 					vw, vh, vd)).astype(np.int32)
 
 	# convert to  (D, H, W)
@@ -193,10 +193,11 @@ def test():
 	lidar = lidar.reshape((-1, 4))
 	lidar_features, voxel_coords = preprocess(lidar)
 	fig = draw_lidar(lidar, is_grid=False, is_top_region=True)
-	mlab.show()
-
+	# mlab.show()
+	print(lidar_features.shape)
+	print(voxel_coords.shape)
 	fig = draw_voxel(voxel_coords, lidar)
-	mlab.show()
+	# mlab.show()
 	
 
 if __name__ == '__main__':
