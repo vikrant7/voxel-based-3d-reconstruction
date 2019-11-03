@@ -10,12 +10,12 @@ def draw_lidar(lidar, is_grid=False, is_axis = True, is_top_region=True, fig=Non
 	pxs=lidar[:,0]
 	pys=lidar[:,1]
 	pzs=lidar[:,2]
-	prs=lidar[:,3]
+	#prs=lidar[:,3]
 
 	if fig is None: fig = mlab.figure(figure=None, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(1000, 500))
 
 	mlab.points3d(
-		pxs, pys, pzs, prs,
+		pxs, pys, pzs, #prs,
 		mode='point',  # 'point'  'sphere'
 		colormap='gnuplot',  #'bone',  #'spectral',  #'copper',
 		scale_factor=1,
@@ -77,13 +77,13 @@ def draw_voxel(voxel_coords, lidar, is_grid=False, is_axis = True, is_top_region
 	pxs=voxel_coords[:,0]
 	pys=voxel_coords[:,1]
 	pzs=voxel_coords[:,2]
-	prs=lidar[:,3]
-	prs=prs[:pzs.shape[0],]
+	#prs=lidar[:,3]
+	#prs=prs[:pzs.shape[0],]
 
 	if fig is None: fig = mlab.figure(figure=None, bgcolor=(0,0,0), fgcolor=None, engine=None, size=(10000, 50000))
 
 	mlab.points3d(
-		pxs, pys, pzs, prs,
+		pxs, pys, pzs, #prs,
 		mode="cube",  # 'point'  'sphere'
 		colormap='cool',  #'bone',  #'spectral',  #'copper',
 		scale_factor=1,
@@ -144,14 +144,14 @@ def preprocess(lidar):
 	T=35
 
 	# voxel size
-	vd = 0.4
-	vh = 0.2
-	vw = 0.2
+	vd = 0.02
+	vh = 0.02
+	vw = 0.02
 
 	# points cloud range
-	x_range = (0, 70.4)
-	y_range = (-40, 40)
-	z_range = (-3, 1)
+	x_range = (-0.05, 3)
+	y_range = (-0.01, 5.5)
+	z_range = (0.1, 5.5)
 	W = math.ceil((x_range[1] - x_range[0]) / vw)
 	H = math.ceil((y_range[1] - y_range[0]) / vh)
 	D = math.ceil((z_range[1] - z_range[0]) / vd)
@@ -159,7 +159,7 @@ def preprocess(lidar):
 	# shuffling the points
 	#snp.random.shuffle(lidar)
 
-	voxel_coords = ((lidar[:, :3] - np.array([x_range[0], y_range[0], z_range[0]])) / (
+	voxel_coords = ((lidar[:, :] - np.array([x_range[0], y_range[0], z_range[0]])) / (
 					vw, vh, vd)).astype(np.int32)
 
 	# convert to  (D, H, W)
@@ -170,7 +170,7 @@ def preprocess(lidar):
 	voxel_features = []
 
 	for i in range(len(voxel_coords)):
-		voxel = np.zeros((T, 7), dtype=np.float32)
+		voxel = np.zeros((T, 6), dtype=np.float32)
 		pts = lidar[inv_ind == i]
 		if voxel_counts[i] > T:
 			pts = pts[:T, :]
@@ -186,18 +186,34 @@ def test():
 	import glob
 	import matplotlib.pyplot as plt
 
-	lidar_path = os.path.join('data/')
-	lidar_file = lidar_path + '000000.bin'
-	print("Processing: ", lidar_file)
-	lidar = np.fromfile(lidar_file, dtype=np.float32)
-	lidar = lidar.reshape((-1, 4))
-	lidar_features, voxel_coords = preprocess(lidar)
-	fig = draw_lidar(lidar, is_grid=False, is_top_region=True)
-	# mlab.show()
+	data_path = os.path.join('data/')
+	data_file = data_path + 'house2-1.txt'
+	print("Processing: ", data_file)
+	data = []
+	with open(data_file) as f:
+		for line in f:
+			line = line.rstrip()
+			points = line.split(" ")
+			for i in range(0,3):
+				points[i]=float(points[i])
+			points = np.array(points)
+			data.append(points)
+	#lidar = np.fromfile(data, dtype=np.float32)
+	data = np.array(data)
+	data = data.reshape((-1, 3))
+	print('x_min', min(data[:,0]))
+	print('y_min', min(data[:,1]))
+	print('z_min', min(data[:,2]))
+	print('x_max', max(data[:,0]))
+	print('y_max', max(data[:,1]))
+	print('z_max', max(data[:,2]))
+	lidar_features, voxel_coords = preprocess(data)
+	fig = draw_lidar(data, is_grid=False, is_top_region=True)
+	mlab.show()
 	print(lidar_features.shape)
 	print(voxel_coords.shape)
-	fig = draw_voxel(voxel_coords, lidar)
-	# mlab.show()
+	fig = draw_voxel(voxel_coords, data)
+	mlab.show()
 	
 
 if __name__ == '__main__':
