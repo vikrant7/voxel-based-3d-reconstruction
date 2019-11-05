@@ -90,15 +90,24 @@ def validation(start, end):
 
 # voxels are considered to be square of side = 'voxel_size'
 
-lidar_path = os.path.join('data/')
-lidar_file = lidar_path + '000000.bin'
-print("Processing: ", lidar_file)
-data = np.fromfile(lidar_file, dtype=np.float32)
-data = data.reshape((-1, 4))
-
-data = data[:,:3]
-voxel_size = 2 #taken input from the user
-L = 10 # largest size of hole to be filled -- taken input from the user
+data_path = os.path.join('data/')
+data_file = data_path + 'house2-2.txt'
+#	data_file = "voxel.npy"
+print("Importing data  from file: " + data_file)
+data = []
+with open(data_file) as f:
+	for line in f:
+		line = line.rstrip()
+		points = line.split(" ")
+		for i in range(0,3):
+			points[i]=float(points[i])
+		points = np.array(points)
+		data.append(points)
+data = np.array(data)
+data = data.reshape((-1, 3))
+data = 30*data[:,:3]
+voxel_size = 1 #taken input from the user
+L = 5 # largest size of hole to be filled -- taken input from the user
 
 # bounding_box = [x, y, z] size in x y and z direction
 #nx = number of voxels in x-direction
@@ -115,6 +124,8 @@ nx = int(bounding_box[0]/voxel_size) + 1
 ny = int(bounding_box[1]/voxel_size) + 1
 nz = int(bounding_box[2]/voxel_size) + 1
 
+print("Number of voxels created in x y and z: %d %d %d" %((nx+4), (nx+4), (nx+4)))
+
 #padding layer should be considered as neighbourhood of 5x5 is considered
 voxel = np.zeros([nx+4, ny+4, nz+4]) # 3D array with dimensions of nx + 4, ny + 4 and nz + 4 due to padding for corner points
 voxel_index = [] #list of indeces of voxel elements which represents surface
@@ -124,16 +135,12 @@ x_min = min(data[:, 0])
 y_min = min(data[:, 1])
 z_min = min(data[:, 2])
 for i in range(len(data)):
-	#print(i, len(data))
 	voxel_idx = int((data[i][0]-x_min)/voxel_size) + 2  # From 2(0) to nx+1(nx-1)
 	voxel_idy = int((data[i][1]-y_min)/voxel_size) + 2  # From 2(0) to ny+1(ny-1)
 	voxel_idz = int((data[i][2]-z_min)/voxel_size) + 2  # From 2(0) to nz+1(nz-1)
 	if voxel[voxel_idx][voxel_idy][voxel_idz] != 1:
 		voxel[voxel_idx][voxel_idy][voxel_idz] = 1
 		voxel_index.append([voxel_idx, voxel_idy, voxel_idz])
-
-
-print(voxel_size, x_min, y_min, z_min)
 
 # Gap fillig algorithm
 # pg_voxel and b_voxel are voxels consisting of p,g-voxels and boundary voxels repectively
@@ -144,10 +151,10 @@ pg_voxel_index = voxel_index #list of indices of voxel elements which are p-voxe
 b_voxel = voxel
 b_voxel_index = voxel_index #list of indices of voxel elements which are boundary voxels
 # value of -1 used to define boundary voxel and -2 for outermost boundary
-print(len(pg_voxel_index), len(b_voxel_index))
 
 
 # keep only boundary and remove others form b_voxel
+print("Creating boundary and p-g voxelised representation")
 i = 0
 while(i<len(b_voxel_index)):
 	x = b_voxel_index[i][0]
@@ -166,75 +173,45 @@ while(i<len(b_voxel_index)):
 		b_voxel[x][y][z] = -1 # mark as boundary voxel
 	else:
 		b_voxel[x][y][z] = 0  # mark as background voxel
-		print(len(b_voxel_index))
+		# print(len(b_voxel_index))
 		b_voxel_index.remove(b_voxel_index[i]) # remove the index from the set of boundary indices
 		i -= 1
 	i += 1
 
 #filling the holes with g-voxels
+print("Inserting Points to fill gap.....Sit back and relax!!!...")
 boundary_size = len(b_voxel_index)
 for i in range(boundary_size):
+	if(i%500 == 0):
+		print("%.2f%% of the process complete..." %((i*100)/boundary_size))
 	for j in range(i+1, boundary_size):
 		if(distance(b_voxel_index[i], b_voxel_index[j])>L):
 			continue
-		#print(i, len(voxel_index), len(pg_voxel_index), len(b_voxel_index))
-		#if(validation(b_voxel_index[i], b_voxel_index[j]) == False):
-			#continue
 		listofpoints = Bresenham3D(b_voxel_index[i], b_voxel_index[j])#, pg_voxel_index)
-		#print(i, "length ", len(listofpoints))
 		for idx in range(len(listofpoints)):
 			if(listofpoints[idx] not in pg_voxel_index):
-				print("point inserted", i,j)
-				#list1 = [listofpoints[idx][0],listofpoints[idx][1], listofpoints[idx][2]]
+				#print("point inserted", i,j)
 				pg_voxel_index.append(listofpoints[idx])
-				#pg_voxel[listofpoints[idx][0]][listofpoints[idx][1]][listofpoints[idx][2]] = 1
 				b_voxel_index.append(listofpoints[idx])
 
 for idx in range(len(pg_voxel_index)):
 	if(pg_voxel[pg_voxel_index[idx][0]][pg_voxel_index[idx][1]][pg_voxel_index[idx][2]] != 1):
 		pg_voxel[pg_voxel_index[idx][0]][pg_voxel_index[idx][1]][pg_voxel_index[idx][2]] = 1
 
-np.save("foo.csv", pg_voxel)
-
-
-
-# for d in range(1, L+1):
-# 	# keep only boundary and remove others form b_voxel
-# 	i = 0
-# 	while(i<len(b_voxel_index)):
-# 		x = b_voxel_index[i][0]
-# 		y = b_voxel_index[i][1]
-# 		z = b_voxel_index[i][2]
-# 		#definition of NFC3, NBC3 and NBC5 remaining
-# 		#checking conditions on pg_voxel
-# 		# nfc3 = NFC3(pg_voxel[pg_voxel[x-1:x+2, y-1:y+2, z-1:z+2]])
-# 		# nbc5 = NBC5(pg_voxel[pg_voxel[x-2:x+3, y-2:y+3, z-2:z+3]])
-# 		nfc3 = num_connected_components(pg_voxel[x-1:x+2, y-1:y+2, z-1:z+2], is_foreground=1, size=3) # passing the neighbourhood of 3x3
-# 		nbc5 = num_connected_components(pg_voxel[x-2:x+3, y-2:y+3, z-2:z+3], is_foreground=1, size=5) # passing the neighbourhood of 5x5
-		
-# 		if(nfc3>1 or nfc3==0):
-# 			b_voxel[x][y][z] = -1 # mark as boundary voxel
-# 		elif(nfc3 == 1 and nbc5 == 1):
-# 			b_voxel[x][y][z] = -1 # mark as boundary voxel
-# 		else:
-# 			b_voxel[x][y][z] = 0  # mark as background voxel
-# 			print(len(b_voxel_index))
-# 			b_voxel_index.remove(b_voxel_index[i]) # remove the index from the set of boundary indices
-# 			i -= 1
-# 		i += 1
-
-# 	#filling the holes with g-voxels
-# 	for i in range(len(b_voxel_index)):
-# 		for j in range(i+1, len(b_voxel_index)):
-# 			print(i, len(voxel_index), len(pg_voxel_index), len(b_voxel_index))
-# 			if(validation(b_voxel_index[i], b_voxel_index[j]) == False):
-# 				continue
-# 			listofpoints = Bresenham3D(b_voxel_index[i], b_voxel_index[j], pg_voxel_index)
-# 			#print(listofpoints)
-# 			for idx in range(len(listofpoints)):
-# 				if([listofpoints[idx][0],listofpoints[idx][1], listofpoints[idx][2]] not in pg_voxel_index):
-# 					list1 = [listofpoints[idx][0],listofpoints[idx][1], listofpoints[idx][2]]
-# 					pg_voxel_index.append(list1)
-# 					pg_voxel[listofpoints[idx][0]][listofpoints[idx][1]][listofpoints[idx][2]] = 1
-# 					b_voxel_index.append(list1)
-# 			pass
+x_size, y_size, z_size = pg_voxel.shape
+points = np.empty((0,3), float)
+voxel_size = 0.1
+for i in range(x_size):
+	for j in range(y_size):
+		for k in range(z_size):
+			if pg_voxel[i][j][k] == 1:
+				x = (voxel_size * i) + x_min
+				y = (voxel_size * j) + y_min
+				z = (voxel_size * k) + z_min
+				# index = index + 1
+				point = [[x, y, z]]
+				points = np.r_[points, point]
+print("Number of final points: %d" %points.shape[0])
+# Save the numpy array for visualization
+print("Saving the points in .npy format...run voxel.py to visualise...")
+np.save("voxel", points)

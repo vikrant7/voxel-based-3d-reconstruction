@@ -72,7 +72,7 @@ def draw_lidar(lidar, is_grid=False, is_axis = True, is_top_region=True, fig=Non
 
 	return fig
 
-def draw_voxel(voxel_coords, lidar, is_grid=False, is_axis = True, is_top_region=True, fig=None):
+def draw_voxel(voxel_coords, is_grid=False, is_axis = True, is_top_region=True, fig=None):
 
 	pxs=voxel_coords[:,0]
 	pys=voxel_coords[:,1]
@@ -144,9 +144,9 @@ def preprocess(lidar):
 	T=35
 
 	# voxel size
-	vd = 0.02
-	vh = 0.02
-	vw = 0.02
+	vd = 0.1 #0.1
+	vh = 0.2 #0.1
+	vw = 0.2 #0.1
 
 	# points cloud range
 	x_range = (-0.05, 3)
@@ -186,20 +186,21 @@ def test():
 	import glob
 	import matplotlib.pyplot as plt
 
-	data_path = os.path.join('data/')
-	data_file = data_path + 'house2-1.txt'
+	# data_path = os.path.join('data/')
+	# data_file = data_path + 'house2-2.txt'
+	data_file = "voxel.npy"
 	print("Processing: ", data_file)
-	data = []
-	with open(data_file) as f:
-		for line in f:
-			line = line.rstrip()
-			points = line.split(" ")
-			for i in range(0,3):
-				points[i]=float(points[i])
-			points = np.array(points)
-			data.append(points)
-	#lidar = np.fromfile(data, dtype=np.float32)
-	data = np.array(data)
+	# data = []
+	# with open(data_file) as f:
+	# 	for line in f:
+	# 		line = line.rstrip()
+	# 		points = line.split(" ")
+	# 		for i in range(0,3):
+	# 			points[i]=float(points[i])
+	# 		points = np.array(points)
+	# 		data.append(points)
+	data = np.load(data_file)
+	#data = np.array(data)
 	data = data.reshape((-1, 3))
 	print('x_min', min(data[:,0]))
 	print('y_min', min(data[:,1]))
@@ -207,13 +208,13 @@ def test():
 	print('x_max', max(data[:,0]))
 	print('y_max', max(data[:,1]))
 	print('z_max', max(data[:,2]))
-	lidar_features, voxel_coords = preprocess(data)
-	fig = draw_lidar(data, is_grid=False, is_top_region=True)
+	#lidar_features, voxel_coords = preprocess(data)
+	fig = draw_voxel(data, is_grid=False, is_top_region=True)
 	mlab.show()
-	print(lidar_features.shape)
-	print(voxel_coords.shape)
-	fig = draw_voxel(voxel_coords, data)
-	mlab.show()
+	# print(lidar_features.shape)
+	# print(voxel_coords.shape)
+	# fig = draw_voxel(voxel_coords, data)
+	# mlab.show()
 	
 
 if __name__ == '__main__':
