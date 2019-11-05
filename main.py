@@ -133,7 +133,7 @@ for i in range(len(data)):
 		voxel_index.append([voxel_idx, voxel_idy, voxel_idz])
 
 
-
+print(voxel_size, x_min, y_min, z_min)
 
 # Gap fillig algorithm
 # pg_voxel and b_voxel are voxels consisting of p,g-voxels and boundary voxels repectively
