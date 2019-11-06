@@ -91,7 +91,7 @@ def validation(start, end):
 # voxels are considered to be square of side = 'voxel_size'
 
 data_path = os.path.join('data/')
-data_file = data_path + 'house2-2.txt'
+data_file = data_path + 'house2-5.txt'
 #	data_file = "voxel.npy"
 print("Importing data  from file: " + data_file)
 data = []
@@ -214,4 +214,4 @@ for i in range(x_size):
 print("Number of final points: %d" %points.shape[0])
 # Save the numpy array for visualization
 print("Saving the points in .npy format...run voxel.py to visualise...")
-np.save("voxel", points)
+np.save("voxel5", points)
